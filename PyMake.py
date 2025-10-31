@@ -11,7 +11,7 @@ project_name = "Project"
 Error_message = "\033[31mFATAL ERROR\033[0m:"
 
 Taking_from_file = False
-version = 1
+version = 2
 
 # Compiler
 CC = "g++"
@@ -22,6 +22,10 @@ def clean():
     print("\033[93mLog\033[0m: Cleaning...")
     for i in os.listdir(out_folder):
         os.system(f"rm {out_folder}/{i}")
+def cleancache():
+    print("\033[93mLog\033[0m: Cleaning Cache...")
+    for i in os.listdir(cache_folder):
+        os.system(f"rm {cache_folder}/{i}")
 def endall_correctly():
     print("\033[32mEXIT\033[0m: Exit without errors!")
     exit(0)
@@ -36,6 +40,8 @@ def getfiles():
 
     files_to_compile = []
 
+    _file = ''
+
     for file in files:
         print(f"\033[93mLog\033[0m: File {file} saved in cache")
         _file = file.split('.')[0]
@@ -48,11 +54,11 @@ def getfiles():
                 if(not i.read()==y.read()):
                     files_to_compile.append(file)
                     print(f"\033[93mGetting files\033[0m: {file} Gonna be compiled!")
-                __file = file.replace('.cpp', '.o')
+                if('.cpp' in file): __file = file.replace('.cpp', '.o')
+                if('.c' in file): __file = file.replace('.c', '.o')
                 if(not os.path.isfile(f"{out_folder}/{__file}")):
                     files_to_compile.append(file)
                     print(f"\033[93mGetting files\033[0m: {__file} does not exists, So lets compile it!")
-
                 y.close()
             i.close()
         with open(f"{cache_folder}/{_file}", 'w') as i: # Saving
@@ -77,7 +83,8 @@ def compile_o(link_):
     for i in range(len(files)):
         out = files[i].split('.')[0]
         out+=".o"
-        command=f"{CC} {args} {from_folder}/{files[i]} -o {out_folder}/{out}"
+        if(not "-c" in args):command=f"{CC} {args} -c {from_folder}/{files[i]} -o {out_folder}/{out}"
+        else: command=f"{CC} {args} {from_folder}/{files[i]} -o {out_folder}/{out}"
 
         exit_code = os.system(command)
         exit_code = os.WEXITSTATUS(exit_code)
@@ -154,6 +161,68 @@ def readfile(file):
         print(f"{Error_message} That file does not exists")
         exit(1)
 
+# Templates
+def MakeCTemplate(path = str):
+    Initial_code = """#include <stdio.h>
+
+int main(int argc, char **argv)
+{
+    printf("Hello World!\\n");
+
+    return 0;
+}"""
+    Initial_conf = """Args =
+Project-Name = Project
+Folder = src
+Out = build
+
+CC = gcc"""
+
+    print("\033[93mLog\033[0m: Creating C template...")
+
+    if(path.endswith('/')): print("\033[93mError\033[0m: Don't end the path with a slash"); exit(1)
+
+    try: os.mkdir(f"{path}/src")
+    except FileExistsError: pass
+    try: os.mkdir(f"{path}/build")
+    except FileExistsError: pass
+
+    # FILES
+    with open(f"{path}/src/main.c", 'w') as file:
+        file.write(Initial_code)
+    with open(f"{path}/config.conf", 'w') as file:
+        file.write(Initial_conf)
+def MakeCPPTemplate(path = str):
+    Initial_code = """#include <iostream>
+
+int main(int argc, char **argv)
+{
+    std::cout<<"Hello World!"<<std::endl;
+
+    return 0;
+}"""
+    Initial_conf = """Args =
+Project-Name = Project
+Folder = src
+Out = build
+
+CC = g++"""
+
+    print("\033[93mLog\033[0m: Creating C++ template...")
+
+    if(path.endswith('/')): print("\033[93mError\033[0m: Don't end the path with a slash"); exit(1)
+
+    try: os.mkdir(f"{path}/src")
+    except FileExistsError: pass
+    try: os.mkdir(f"{path}/build")
+    except FileExistsError: pass
+
+    # FILES
+    with open(f"{path}/src/main.cpp", 'w') as file:
+        file.write(Initial_code)
+    with open(f"{path}/config.conf", 'w') as file:
+        file.write(Initial_conf)
+
 help = """
 \033[32mPyMake\033[0m is a tool, Making a little bit easy to compile C++ files with args and stuff like that
 The paramethers are:
@@ -161,28 +230,31 @@ The paramethers are:
 \033[32m-v\033[0m: Display the actual pymake version
 \033[32m-h\033[0m: Display the help text
 \033[32m-c\033[0m: Compile with the next paramethers
-    \033[32m-f\033[0m: Specify the folder with the files to compile
+    \033[93m-f\033[0m: Specify the folder with the files to compile
 \033[32m-a\033[0m: Specify the paramethers with a file
 \033[32m-file\033[0m: Specify the settings file, That's have the parametheres as variables
 \033[32m-run\033[0m: Run the App by the project name
 \033[32m-clean\033[0m: Clean the out directory
 \033[32m-save\033[0m: Save the files that are in the chosed folder, To not compile things that are already compiled
+\033[32m-cleancache\033[0m: Clean the cache directory
+\033[32m-template\033[0m: Create a template specifying the template, The template are:, Then specify the path
+    \033[93mc\033[0m: C template
+    \033[93mc++\033[0m: C++ template
 """
 
 if __name__=="__main__":
-    try:
-        print("\033[93mLog\033[0m: Creating the output folder...")
-        os.mkdir(out_folder)
-    except Exception as e:
-        pass
-    try:
-        print("\033[93mLog\033[0m: Creating the .cache folder...")
-        os.mkdir(cache_folder)
-    except Exception as e:
-        pass
-
     index = 0
     if(len(sys.argv)>1):
+        try:
+            print("\033[93mLog\033[0m: Creating the output folder...")
+            os.mkdir(out_folder)
+        except Exception as e:
+            pass
+        try:
+            print("\033[93mLog\033[0m: Creating the .cache folder...")
+            os.mkdir(cache_folder)
+        except Exception as e:
+            pass
         for i in sys.argv:
             index+=1
             if(i=="-file"):
@@ -197,6 +269,8 @@ if __name__=="__main__":
                     link(False)
             if(i=="-clean"):
                 clean()
+            if(i=="-cleancache"):
+                cleancache()
             if(i=="-save"):
                 getfiles()
             if(i=="-a"): # SETTING ARGS
@@ -238,10 +312,27 @@ if __name__=="__main__":
                 exit_code = os.WEXITSTATUS(exit_code)
                 if(exit_code):
                     print(f'{Error_message} Run what?')
-            if(i=="-v"): # RUN
+            if(i=="-v"): # VERSION
                 print(f"\033[32mPyMake Version\033[0m: {version}")
             if(i=="-h"): # RUN
                 print(help)
+            if(i=="-template"): # TEMPLATES
+                try:
+                    match sys.argv[index]:
+                        case "c":
+                            try:
+                                MakeCTemplate(sys.argv[index+1])
+                            except IndexError:
+                                print(f"{Error_message} specify the Template path")
+                        case "c++":
+                            try:
+                                MakeCPPTemplate(sys.argv[index+1])
+                            except IndexError:
+                                print(f"{Error_message} specify the Template path")
+                        case _:
+                            break
+                except IndexError:
+                    print(f"{Error_message} Please specify a template, Like C or C++")
                 
         endall_correctly()
     else:
