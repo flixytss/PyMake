@@ -6,6 +6,8 @@ from_folder = ""
 out_folder = "build"
 cache_folder = ".cache"
 
+args_on_run = ""
+
 project_name = "Project"
 
 Error_message = "\033[31mFATAL ERROR\033[0m:"
@@ -54,11 +56,6 @@ def getfiles():
                 if(not i.read()==y.read()):
                     files_to_compile.append(file)
                     print(f"\033[93mGetting files\033[0m: {file} Gonna be compiled!")
-                if('.cpp' in file): __file = file.replace('.cpp', '.o')
-                if('.c' in file): __file = file.replace('.c', '.o')
-                if(not os.path.isfile(f"{out_folder}/{__file}")):
-                    files_to_compile.append(file)
-                    print(f"\033[93mGetting files\033[0m: {__file} does not exists, So lets compile it!")
                 y.close()
             i.close()
         with open(f"{cache_folder}/{_file}", 'w') as i: # Saving
@@ -85,6 +82,8 @@ def compile_o(link_):
         out+=".o"
         if(not "-c" in args):command=f"{CC} {args} -c {from_folder}/{files[i]} -o {out_folder}/{out}"
         else: command=f"{CC} {args} {from_folder}/{files[i]} -o {out_folder}/{out}"
+
+        print(f"{CC} {args} {from_folder}/{files[i]} -o {out_folder}/{out}")
 
         exit_code = os.system(command)
         exit_code = os.WEXITSTATUS(exit_code)
@@ -307,7 +306,7 @@ if __name__=="__main__":
             if(i=="-run"): # RUN
                 print("\033[32mSuccess\033[0m: Running App!")
                 with open(f"{cache_folder}/last.cache", 'r') as s:
-                    exit_code = os.system(f"./{out_folder}/{s.read()}")
+                    exit_code = os.system(f"./{out_folder}/{s.read()} {args_on_run}")
                     s.close()
                 exit_code = os.WEXITSTATUS(exit_code)
                 if(exit_code):
